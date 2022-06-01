@@ -4,7 +4,10 @@ const { secret, expired } = require('../config');
 
 class UserCtl {
   async findUser(ctx) {
-    ctx.body = await User.find();
+    const { per_page = 10 } = ctx.query;
+    const page = Math.max(ctx.query.page * 1, 1) - 1;
+    const perPage = Math.max(per_page * 1, 1);
+    ctx.body = await User.find({ name: new RegExp(ctx.query.q) }).limit(perPage).skip(perPage * page);
   }
 
   async login(ctx) {
@@ -56,7 +59,7 @@ class UserCtl {
   }
 
   async findById(ctx) {
-    const { fields } = ctx.query;
+    const { fields = '' } = ctx.query;
     const selectFields = fields.split(';').filter(f => f).map(f => " +" + f ).join('');
     const user = await User.findById(ctx.params.id).select(selectFields);
     ctx.body = user;
@@ -72,7 +75,7 @@ class UserCtl {
 
   async checkUserExist(ctx, next) {
     // const user = await User.findById(ctx.params.id);
-    if (User.findById(ctx.params.id)) { ctx.throw(404, '用户不存在'); }
+    if (!User.findById(ctx.params.id)) { ctx.throw(404, '用户不存在'); }
     await next()
   }
 
@@ -93,6 +96,7 @@ class UserCtl {
   async unfollow(ctx) {
     const me = await User.findById(ctx.state.user._id).select('+following');
     const index = me.following.map(id => id.toString()).indexOf(ctx.params.id);
+    console.log(index, me.following);
     if (index > -1) {
       me.following.splice(index, 1);
       me.save();

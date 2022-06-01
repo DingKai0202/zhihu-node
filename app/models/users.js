@@ -29,9 +29,9 @@ const userSchama = new Schema({
     select: false
   },
   following: {
-    type: [{ type: Schema.Types.ObjectId, ref: 'user' }],
+    type: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     select: false,
   }
 });
 
-module.exports = model('user', userSchama);
+module.exports = model('User', userSchama);
