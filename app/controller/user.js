@@ -62,6 +62,53 @@ class UserCtl {
     ctx.body = user;
   }
 
+  async listFollowing(ctx) {
+    const user = await User.findById(ctx.params.id).select('+following').populate('following')
+    if (!user) {
+      ctx.throw(404);
+    }
+    ctx.body = user.following;
+  }
+
+  async checkUserExist(ctx, next) {
+    // const user = await User.findById(ctx.params.id);
+    if (User.findById(ctx.params.id)) { ctx.throw(404, '用户不存在'); }
+    await next()
+  }
+
+  async follow(ctx) {
+    const me = await User.findById(ctx.state.user._id).select('+following');
+    if (!(me.following.map(id => id.toString())).includes(ctx.params.id)) {
+      me.following.push(ctx.params.id);
+      me.save();
+
+      ctx.body = {
+        user: me
+      }
+    } else {
+      ctx.throw(403, '用户已关注');
+    }
+  }
+
+  async unfollow(ctx) {
+    const me = await User.findById(ctx.state.user._id).select('+following');
+    const index = me.following.map(id => id.toString()).indexOf(ctx.params.id);
+    if (index > -1) {
+      me.following.splice(index, 1);
+      me.save();
+      ctx.body = {
+        user: me
+      }
+    } else {
+      ctx.throw(403, '用户不存在');
+    }
+  }
+
+  async listFans(ctx) {
+    const users = await User.find({ following: ctx.params.id });
+    ctx.body = users;
+  }
+
 }
 
 module.exports = UserCtl;

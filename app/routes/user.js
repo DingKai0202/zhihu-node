@@ -18,4 +18,12 @@ router.patch('/update/:id', auth, new UserCtl().checkOwner,  new UserCtl().updat
 
 router.post('/delete/:id', );
 
+router.get('/:id/following', new UserCtl().listFollowing);
+
+router.put('/following/:id', auth,new UserCtl().checkUserExist, new UserCtl().follow);
+
+router.delete('/following/:id', auth, new UserCtl().checkUserExist, new UserCtl().unfollow);
+
+router.get('/:id/fans', new UserCtl().listFans);
+
 module.exports = router;
