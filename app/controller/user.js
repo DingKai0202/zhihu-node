@@ -61,7 +61,8 @@ class UserCtl {
   async findById(ctx) {
     const { fields = '' } = ctx.query;
     const selectFields = fields.split(';').filter(f => f).map(f => " +" + f ).join('');
-    const user = await User.findById(ctx.params.id).select(selectFields);
+    const user = await User.findById(ctx.params.id).select(selectFields)
+        // .populate('following locations business employments.company employments.job educations.school educations.major');
     ctx.body = user;
   }
 

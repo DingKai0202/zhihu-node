@@ -1,4 +1,7 @@
+const questions = require('../models/questions');
 const Topic = require('../models/topics');
+const User = require('../models/users');
+const Question = require('../models/questions');
 
 class TopicsCtl {
   async find(ctx) {
@@ -34,6 +37,58 @@ class TopicsCtl {
     });
     const topic = await Topic.findByIdAndUpdate(ctx.params.id, ctx.request.body);
     ctx.body = topic;
+  }
+
+  async checkTopicExist(ctx, next) {
+    const topic = await Topic.findById(ctx.params.id);
+    if (!topic) { ctx.throw(404,'话题不存在'); }
+    await next();
+  }
+
+  async followTopic(ctx) {
+    const me = await User.findById(ctx.state.user._id).select('+followingTopics');
+    if (!(me.followingTopics.map(id => id.toString())).includes(ctx.params.id)) {
+      me.followingTopics.push(ctx.params.id);
+      me.save();
+
+      ctx.body = {
+        user: me
+      }
+    } else {
+      ctx.throw(403, '话题已关注');
+    }
+  }
+
+  async unfollowTopic(ctx) {
+    const me = await User.findById(ctx.state.user._id).select('+followingTopics');
+    const index = me.followingTopics.map(id => id.toString()).indexOf(ctx.params.id);
+
+    if (index > -1) {
+      me.followingTopics.splice(index, 1);
+      me.save();
+      ctx.body = {
+        user: me
+      }
+    } else {
+      ctx.throw(403, '话题不存在');
+    }
+  }
+
+  async listFollowingTopics(ctx) {
+    const user = await User.findById(ctx.params.id).select('+followingTopics');
+    if (!user) { ctx.throw(404, '用户不存在'); }
+    ctx.body = user.followingTopics;
+  }
+
+  async listTopicFollowers(ctx) {
+    const users = await User.find({ followingTopics: ctx.params.id });
+    ctx.body = users;
+  }
+
+
+  async listQuestions(ctx) {
+    const questions = await Question.find({ topics: ctx.params.id })
+    ctx.body = questions;
   }
 
 }
